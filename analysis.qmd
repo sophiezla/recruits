@@ -3,25 +3,39 @@ title: "Recruits"
 author: "Sophie Zhu"
 format: html
 editor: visual
+execute:
+  echo: false
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+#| message: false
+library(tidyverse)
+library(primer.tutorials)
+library(tidymodels)
+library(broom)
+library(marginaleffects)
 ```
 
-You can add options to executable code like this
-
 ```{r}
-#| echo: false
-2 * 2
+#| cache: true
+fit_recruits <- linear_reg() |>
+  set_engine("lm") |>
+  fit(height ~ sex, data = recruits)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+plot_predictions(fit_recruits, condition = "sex", draw = FALSE) |>
+  ggplot(aes(x = sex, y = estimate)) +
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high),
+                  color = "grey20", size = 1.1) +
+  labs(
+    title = "Forecast Height for USMC Recruits",
+    subtitle = "Male recruits are expected to be about 9 cm taller than female recruits",
+    x = "Sex",
+    y = "Expected Height (cm)",
+    caption = "Source: 50-row sample from NHANES via primer.tutorials::recruits"
+  ) +
+  theme_minimal()
+```
+
+People vary in height, and that variation is strongly patterned by sex. Using a 50-row teaching sample drawn from the National Health and Nutrition Examination Survey (NHANES, conducted by the Centers for Disease Control and Prevention), we seek to estimate the average height of male and female USMC recruits for the coming year. One concern is that USMC recruits are more physically fit than the general young-adult population and so may be systematically taller, meaning that the NHANES-based estimates probably understate recruit heights. We model height as a normally distributed variable which is a linear function of sex. We estimate that the average male recruit will be about 175 cm tall and the average female recruit about 166 cm, with the female interval visibly wider than the male interval because we have only ten female rows in our sample. Because USMC recruits are likely taller and fitter than the general NHANES population, and because our sample is small and unevenly split by sex, the true confidence intervals are probably wider than what the model reports.
